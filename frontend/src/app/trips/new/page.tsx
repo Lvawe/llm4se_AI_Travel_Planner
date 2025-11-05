@@ -61,8 +61,36 @@ export default function NewTripPage() {
   const handleSmartCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // 验证必填项
     if (!formData.destination || !formData.startDate || !formData.endDate) {
       toast.error('请填写必填项：目的地和日期')
+      return
+    }
+
+    if (!formData.budget || parseFloat(formData.budget) <= 0) {
+      toast.error('请填写预算金额')
+      return
+    }
+
+    if (!formData.travelers || parseInt(formData.travelers) <= 0) {
+      toast.error('请选择出行人数')
+      return
+    }
+
+    // 验证日期逻辑
+    const startDate = new Date(formData.startDate)
+    const endDate = new Date(formData.endDate)
+    
+    if (endDate <= startDate) {
+      toast.error('结束日期必须晚于开始日期')
+      return
+    }
+
+    // 计算天数差异
+    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    
+    if (daysDiff > 30) {
+      toast.error('行程时长不能超过30天')
       return
     }
 
@@ -177,6 +205,7 @@ export default function NewTripPage() {
                     name="startDate"
                     value={formData.startDate}
                     onChange={handleChange}
+                    min={new Date().toISOString().split('T')[0]}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                     required
                   />
@@ -191,6 +220,8 @@ export default function NewTripPage() {
                     name="endDate"
                     value={formData.endDate}
                     onChange={handleChange}
+                    min={formData.startDate || new Date().toISOString().split('T')[0]}
+                    max={formData.startDate ? new Date(new Date(formData.startDate).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                     required
                   />
@@ -202,7 +233,7 @@ export default function NewTripPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <DollarSign className="inline h-4 w-4 mr-1" />
-                    预算（元）
+                    预算（元）*
                   </label>
                   <input
                     type="number"
@@ -210,21 +241,23 @@ export default function NewTripPage() {
                     value={formData.budget}
                     onChange={handleChange}
                     placeholder="0"
-                    min="0"
+                    min="1"
                     step="100"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Users className="inline h-4 w-4 mr-1" />
-                    出行人数
+                    出行人数 *
                   </label>
                   <select
                     name="travelers"
                     value={formData.travelers}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    required
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
                       <option key={num} value={num}>{num} 人</option>
@@ -320,14 +353,14 @@ export default function NewTripPage() {
                   )}
 
                   {/* 预算明细 */}
-                  {aiPlan.budgetBreakdown && (
+                  {aiPlan.budgetBreakdown && Array.isArray(aiPlan.budgetBreakdown) && (
                     <div className="mb-3">
                       <h4 className="text-sm font-medium text-gray-700 mb-2">💰 预算明细：</h4>
                       <div className="bg-white rounded p-3 text-sm space-y-1">
-                        {Object.entries(aiPlan.budgetBreakdown).slice(0, 4).map(([key, value]: [string, any]) => (
-                          <div key={key} className="flex justify-between">
-                            <span className="text-gray-600">{key}：</span>
-                            <span className="font-medium text-gray-900">¥{value}</span>
+                        {aiPlan.budgetBreakdown.slice(0, 4).map((item: any, idx: number) => (
+                          <div key={idx} className="flex justify-between">
+                            <span className="text-gray-600">{item.category || `项目${idx + 1}`}：</span>
+                            <span className="font-medium text-gray-900">¥{item.amount || 0}</span>
                           </div>
                         ))}
                       </div>

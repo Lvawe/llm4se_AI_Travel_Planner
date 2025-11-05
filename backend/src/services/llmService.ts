@@ -64,7 +64,7 @@ export class LLMService {
             messages: [
               {
                 role: 'system',
-                content: '你是一个专业的旅行规划助手，擅长根据用户需求制定详细的旅行计划。你的回答应该包含每日行程、预算分配、实用建议等信息。请以 JSON 格式返回结果。'
+                content: '你是一个专业的旅行规划助手，擅长根据用户需求制定详细的旅行计划。你的回答应该包含每日行程、预算分配、实用建议等信息。请严格按照 JSON 格式返回结果,不要添加任何额外的文字说明。JSON 必须是有效的,不能有尾随逗号或格式错误。'
               },
               {
                 role: 'user',
@@ -209,6 +209,13 @@ ${request.description ? `**用户需求**: ${request.description}` : ''}
     "部分景点有学生票，记得带学生证"
   ]
 }
+
+重要提示：
+1. 必须返回有效的 JSON 格式
+2. 不要有任何尾随逗号
+3. 不要在 JSON 外添加任何解释文字
+4. 确保所有字符串都用双引号
+5. 确保所有数组和对象都正确闭合
 `
   }
 
@@ -217,17 +224,45 @@ ${request.description ? `**用户需求**: ${request.description}` : ''}
    */
   private parseLLMResponse(content: string, request: TripPlanRequest): TripPlanResponse {
     try {
-      // 尝试提取 JSON
-      const jsonMatch = content.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0])
-        return parsed
+      // 尝试多种方式提取和修复 JSON
+      let jsonStr = content
+
+      // 1. 提取 ```json 代码块
+      const codeBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
+      if (codeBlockMatch) {
+        jsonStr = codeBlockMatch[1]
+      } else {
+        // 2. 提取大括号内容
+        const jsonMatch = content.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          jsonStr = jsonMatch[0]
+        }
       }
 
-      // 如果无法解析 JSON，返回默认结构
-      return this.generateDefaultPlan(request)
+      // 3. 清理常见的 JSON 错误
+      jsonStr = jsonStr
+        .replace(/,(\s*[}\]])/g, '$1')  // 移除尾随逗号
+        .replace(/\n/g, ' ')             // 移除换行
+        .replace(/\r/g, '')              // 移除回车
+        .trim()
+
+      // 4. 尝试解析
+      const parsed = JSON.parse(jsonStr)
+      
+      // 5. 验证必需字段
+      if (!parsed.itinerary || !Array.isArray(parsed.itinerary)) {
+        throw new Error('缺少 itinerary 字段')
+      }
+
+      return {
+        itinerary: parsed.itinerary || [],
+        budgetBreakdown: parsed.budgetBreakdown || [],
+        tips: parsed.tips || [],
+        recommendations: parsed.recommendations || []
+      }
     } catch (error) {
       console.error('解析 LLM 响应失败:', error)
+      console.error('原始内容:', content.substring(0, 500))
       return this.generateDefaultPlan(request)
     }
   }

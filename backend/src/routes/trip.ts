@@ -51,18 +51,6 @@ router.post('/', async (req: AuthRequest, res: Response) => {
   try {
     const { destination, startDate, endDate, budget, travelers, preferences, description, status, aiPlan } = req.body
     
-    // 🔍 调试日志 - 查看接收到的 aiPlan 数据
-    console.log('===== 创建行程 - 后端接收数据 =====')
-    console.log('aiPlan:', aiPlan)
-    console.log('aiPlan 类型:', typeof aiPlan)
-    console.log('aiPlan 是否为对象:', aiPlan && typeof aiPlan === 'object')
-    if (aiPlan) {
-      console.log('aiPlan.itinerary:', aiPlan.itinerary)
-      console.log('aiPlan.budgetBreakdown:', aiPlan.budgetBreakdown)
-      console.log('aiPlan.tips:', aiPlan.tips)
-    }
-    console.log('======================================')
-    
     // Validate required fields
     if (!destination || !startDate || !endDate) {
       return res.status(400).json({ error: '目的地、开始日期和结束日期为必填项' })
@@ -78,16 +66,10 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         travelers: travelers || 1,
         preferences: preferences || [],
         description: description || null,
-        itinerary: aiPlan || null, // Store AI plan in itinerary field
+        itinerary: aiPlan || null,
         status: status || 'draft',
       },
     })
-    
-    // 🔍 调试日志 - 查看保存到数据库的数据
-    console.log('===== 保存到数据库的数据 =====')
-    console.log('trip.itinerary:', trip.itinerary)
-    console.log('trip.itinerary 类型:', typeof trip.itinerary)
-    console.log('================================')
     
     res.status(201).json(trip)
   } catch (error) {

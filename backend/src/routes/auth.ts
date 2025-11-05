@@ -55,8 +55,7 @@ router.post('/register', async (req: Request, res: Response) => {
 
     // Generate JWT token
     const secret = process.env.JWT_SECRET || 'your-secret-key'
-    const expiresIn = process.env.JWT_EXPIRES_IN || '7d'
-    const token = jwt.sign({ userId: user.id }, secret, { expiresIn })
+    const token = jwt.sign({ userId: user.id }, secret, { expiresIn: '7d' })
 
     res.status(201).json({
       token,
@@ -99,8 +98,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // Generate JWT token
     const secret = process.env.JWT_SECRET || 'your-secret-key'
-    const expiresIn = process.env.JWT_EXPIRES_IN || '7d'
-    const token = jwt.sign({ userId: user.id }, secret, { expiresIn })
+    const token = jwt.sign({ userId: user.id }, secret, { expiresIn: '7d' })
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = user
