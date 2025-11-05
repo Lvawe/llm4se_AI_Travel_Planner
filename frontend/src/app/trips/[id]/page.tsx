@@ -16,8 +16,14 @@ import {
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '@/lib/api'
-import AmapComponent from '@/components/AmapComponent'
+import dynamic from 'next/dynamic'
 import { Trip, Expense } from '@/types'
+
+// 动态导入地图组件，禁用 SSR
+const AmapComponent = dynamic(() => import('@/components/AmapComponent'), { 
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-64">加载地图中...</div>
+})
 
 export default function TripDetailPage() {
   const router = useRouter()

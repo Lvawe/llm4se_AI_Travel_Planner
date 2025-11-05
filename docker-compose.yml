@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  ai-travel-planner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # 构建时传入环境变量（前端需要）
+        - NEXT_PUBLIC_AMAP_KEY=${NEXT_PUBLIC_AMAP_KEY}
+        - NEXT_PUBLIC_API_URL=http://localhost:3001
+    image: ai-travel-planner:latest
+    container_name: ai-travel-planner
+    restart: unless-stopped
+    ports:
+      - "5090:5090"  # Frontend
+      - "3001:3001"  # Backend
+    # 添加 extra_hosts 绕过 IPv6 问题
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "db.sygvmnyyzyynuewppitb.supabase.co:host-gateway"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    environment:
+      # 后端环境变量 - 通过主机代理连接数据库
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:aA3527486@host.docker.internal:25432/postgres
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - BACKEND_PORT=3001
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-qwen-turbo}
+      # 前端环境变量
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_AMAP_KEY=${NEXT_PUBLIC_AMAP_KEY}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5090"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+# 使用方法:
+# 1. 复制 .env.example 为 .env 并填写配置
+# 2. 在主机上运行代理: socat TCP-LISTEN:25432,fork,reuseaddr TCP:db.sygvmnyyzyynuewppitb.supabase.co:5432 &
+# 3. docker-compose up -d
+# 2. 运行: docker-compose up -d
+# 3. 查看日志: docker-compose logs -f
+# 4. 停止: docker-compose down

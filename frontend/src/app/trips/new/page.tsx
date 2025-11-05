@@ -6,8 +6,17 @@ import { useAuthStore } from '@/store/authStore'
 import { MapPin, Calendar, DollarSign, Users, Mic, ArrowLeft, Sparkles } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '@/lib/api'
-import AmapComponent from '@/components/AmapComponent'
-import VoiceInput from '@/components/VoiceInput'
+import dynamic from 'next/dynamic'
+
+// 动态导入使用浏览器 API 的组件，禁用 SSR
+const AmapComponent = dynamic(() => import('@/components/AmapComponent'), { 
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-64">加载地图中...</div>
+})
+
+const VoiceInput = dynamic(() => import('@/components/VoiceInput'), { 
+  ssr: false
+})
 
 export default function NewTripPage() {
   const router = useRouter()
@@ -342,7 +351,7 @@ export default function NewTripPage() {
                     value={formData.budget}
                     onChange={handleChange}
                     placeholder="0"
-                    min="1"
+                    min="0"
                     step="100"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                     required

@@ -29,6 +29,10 @@ export default function VoiceInput({ onResult, placeholder = '🎤 说出您的�
   const startRecording = () => {
     try {
       // 检查浏览器是否支持语音识别
+      if (typeof window === 'undefined') {
+        return // 服务端渲染时跳过
+      }
+      
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       
       if (!SpeechRecognition) {
