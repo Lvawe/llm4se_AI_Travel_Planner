@@ -3,21 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
-import { Plus, Calendar, MapPin, DollarSign, Users, LogOut, Settings } from 'lucide-react'
+import { Plus, Calendar, MapPin, DollarSign, Users, LogOut } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '@/lib/api'
-
-interface Trip {
-  id: string
-  destination: string
-  startDate: string
-  endDate: string
-  budget: number
-  travelers: number
-  preferences: string[]
-  status: string
-  createdAt: string
-}
+import { Trip } from '@/types'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -102,13 +91,6 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/settings')}
-                className="p-2 text-gray-600 hover:text-primary-600 transition"
-                title="设置"
-              >
-                <Settings className="w-6 h-6" />
-              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-red-600 transition"

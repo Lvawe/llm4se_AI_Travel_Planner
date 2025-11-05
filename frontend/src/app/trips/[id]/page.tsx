@@ -9,7 +9,6 @@ import {
   Calendar, 
   DollarSign, 
   Users, 
-  Edit, 
   Trash2,
   Plus,
   Check,
@@ -18,28 +17,8 @@ import {
 import { toast } from 'react-hot-toast'
 import api from '@/lib/api'
 import AmapComponent from '@/components/AmapComponent'
-
-interface Trip {
-  id: string
-  destination: string
-  startDate: string
-  endDate: string
-  budget: number
-  travelers: number
-  preferences: string[]
-  description: string
-  status: string
-  createdAt: string
-}
-
-interface Expense {
-  id: string
-  tripId: string
-  category: string
-  amount: number
-  description: string
-  date: string
-}
+import AITripPlan from '@/components/AITripPlan'
+import { Trip, Expense } from '@/types'
 
 export default function TripDetailPage() {
   const router = useRouter()
@@ -71,6 +50,20 @@ export default function TripDetailPage() {
   const fetchTrip = async () => {
     try {
       const response = await api.get(`/api/trips/${params.id}`)
+      
+      // 🔍 调试输出 - 查看完整响应数据
+      console.log('===== API 响应数据 =====')
+      console.log('完整响应:', response.data)
+      console.log('itinerary 字段:', response.data.itinerary)
+      console.log('itinerary 类型:', typeof response.data.itinerary)
+      console.log('itinerary 是否为数组:', Array.isArray(response.data.itinerary))
+      if (response.data.itinerary) {
+        console.log('itinerary.itinerary 字段:', response.data.itinerary.itinerary)
+        console.log('itinerary.budgetBreakdown:', response.data.itinerary.budgetBreakdown)
+        console.log('itinerary.tips:', response.data.itinerary.tips)
+      }
+      console.log('=======================')
+      
       setTrip(response.data)
     } catch (error: any) {
       console.error('Fetch trip error:', error)
@@ -251,6 +244,98 @@ export default function TripDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* AI 生成的行程计划 - 调试版本 */}
+            {trip.itinerary && (
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  🤖 AI 生成的行程计划
+                </h2>
+                
+                {/* 调试信息 */}
+                <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                  <p className="text-sm font-mono text-gray-700 mb-2">
+                    <strong>调试信息:</strong>
+                  </p>
+                  <pre className="text-xs bg-gray-800 text-green-400 p-3 rounded overflow-auto max-h-96">
+                    {JSON.stringify(trip.itinerary, null, 2)}
+                  </pre>
+                </div>
+
+                {/* 简单文本展示 */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-2">原始数据类型:</h3>
+                    <p className="text-sm text-gray-600">
+                      itinerary 类型: {typeof trip.itinerary} <br/>
+                      是否为数组: {Array.isArray(trip.itinerary) ? '是' : '否'} <br/>
+                      是否有 itinerary 字段: {trip.itinerary.itinerary ? '有' : '无'} <br/>
+                      是否有 budgetBreakdown 字段: {trip.itinerary.budgetBreakdown ? '有' : '无'} <br/>
+                      是否有 tips 字段: {trip.itinerary.tips ? '有' : '无'}
+                    </p>
+                  </div>
+
+                  {/* 如果有 itinerary.itinerary 数组 */}
+                  {trip.itinerary.itinerary && Array.isArray(trip.itinerary.itinerary) && (
+                    <div>
+                      <h3 className="font-semibold text-gray-800 mb-2">日程安排:</h3>
+                      {trip.itinerary.itinerary.map((day: any, idx: number) => (
+                        <div key={idx} className="bg-blue-50 p-3 rounded mb-2">
+                          <p className="font-medium">天数: {day.day || `第${idx + 1}天`}</p>
+                          <p className="text-sm">日期: {day.date || '未设置'}</p>
+                          {day.activities && Array.isArray(day.activities) && (
+                            <ul className="mt-2 space-y-1">
+                              {day.activities.map((act: any, i: number) => (
+                                <li key={i} className="text-sm text-gray-700">
+                                  • {act.title || act.activity || act.time || '活动'}
+                                  {act.location && ` - ${act.location}`}
+                                  {act.estimatedCost && ` - ¥${act.estimatedCost}`}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 如果有预算分解 */}
+                  {trip.itinerary.budgetBreakdown && (
+                    <div>
+                      <h3 className="font-semibold text-gray-800 mb-2">预算明细:</h3>
+                      <div className="bg-green-50 p-3 rounded">
+                        {Array.isArray(trip.itinerary.budgetBreakdown) ? (
+                          <ul className="space-y-1">
+                            {trip.itinerary.budgetBreakdown.map((item: any, idx: number) => (
+                              <li key={idx} className="text-sm">
+                                {item.category || `项目${idx + 1}`}: ¥{item.amount || 0}
+                                {item.description && ` - ${item.description}`}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <pre className="text-xs">{JSON.stringify(trip.itinerary.budgetBreakdown, null, 2)}</pre>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 如果有建议 */}
+                  {trip.itinerary.tips && Array.isArray(trip.itinerary.tips) && (
+                    <div>
+                      <h3 className="font-semibold text-gray-800 mb-2">旅行建议:</h3>
+                      <ul className="bg-yellow-50 p-3 rounded space-y-1">
+                        {trip.itinerary.tips.map((tip: string, idx: number) => (
+                          <li key={idx} className="text-sm text-gray-700">
+                            💡 {tip}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* 费用管理卡片 */}
             <div className="bg-white rounded-xl shadow-lg p-6">

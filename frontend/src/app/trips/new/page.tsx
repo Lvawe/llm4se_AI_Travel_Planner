@@ -13,7 +13,6 @@ export default function NewTripPage() {
   const router = useRouter()
   const { token } = useAuthStore()
   const [loading, setLoading] = useState(false)
-  const [aiLoading, setAiLoading] = useState(false)
   const [showVoiceInput, setShowVoiceInput] = useState(false)
   const [aiPlan, setAiPlan] = useState<any>(null)
   const [formData, setFormData] = useState({
@@ -58,15 +57,22 @@ export default function NewTripPage() {
     toast.success('语音识别成功！')
   }
 
-  const handleAIGenerate = async () => {
+  // 智能创建行程：AI生成 + 自动保存
+  const handleSmartCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
     if (!formData.destination || !formData.startDate || !formData.endDate) {
-      toast.error('请先填写目的地和日期')
+      toast.error('请填写必填项：目的地和日期')
       return
     }
 
-    setAiLoading(true)
+    setLoading(true)
+
     try {
-      const response = await api.post('/api/ai/generate-plan', {
+      // 步骤1: 调用AI生成行程计划
+      toast.loading('AI正在为您规划行程...', { id: 'ai-generate' })
+      
+      const aiResponse = await api.post('/api/ai/generate-plan', {
         destination: formData.destination,
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -76,27 +82,14 @@ export default function NewTripPage() {
         description: formData.description
       })
 
-      setAiPlan(response.data.plan)
-      toast.success('AI 行程规划生成成功！')
-    } catch (error: any) {
-      console.error('AI generate error:', error)
-      toast.error(error.response?.data?.error || 'AI 生成失败')
-    } finally {
-      setAiLoading(false)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!formData.destination || !formData.startDate || !formData.endDate) {
-      toast.error('请填写必填项')
-      return
-    }
-
-    setLoading(true)
-
-    try {
+      const generatedPlan = aiResponse.data.plan
+      setAiPlan(generatedPlan)
+      
+      toast.success('行程规划完成！', { id: 'ai-generate' })
+      
+      // 步骤2: 自动创建行程并保存
+      toast.loading('正在保存行程...', { id: 'create-trip' })
+      
       const response = await api.post('/api/trips', {
         destination: formData.destination,
         startDate: formData.startDate,
@@ -105,15 +98,18 @@ export default function NewTripPage() {
         travelers: parseInt(formData.travelers),
         preferences: formData.preferences,
         description: formData.description,
-        status: 'planning',
-        aiPlan: aiPlan || undefined
+        status: 'planned',
+        aiPlan: generatedPlan // 保存AI生成的完整计划
       })
 
-      toast.success('行程创建成功！')
+      toast.success('智能行程创建成功！', { id: 'create-trip' })
+      
+      // 步骤3: 跳转到详情页
       router.push(`/trips/${response.data.id}`)
+      
     } catch (error: any) {
-      console.error('Create trip error:', error)
-      toast.error(error.response?.data?.error || '创建行程失败')
+      console.error('Smart create error:', error)
+      toast.error(error.response?.data?.error || '智能创建失败，请重试')
     } finally {
       setLoading(false)
     }
@@ -151,7 +147,7 @@ export default function NewTripPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 表单区域 */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSmartCreate} className="space-y-6">
               {/* 目的地 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -260,10 +256,10 @@ export default function NewTripPage() {
                 </div>
               </div>
 
-              {/* 行程描述 */}
+              {/* 行程描述 - 带语音输入 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  行程描述
+                  🎤 语音描述 / 文字描述
                   <button
                     type="button"
                     onClick={() => setShowVoiceInput(!showVoiceInput)}
@@ -282,48 +278,43 @@ export default function NewTripPage() {
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="描述一下你的旅行需求，AI 将为你生成个性化行程..."
+                  placeholder="例如：我想去日本，5天，预算1万元，喜欢美食和动漫，带孩子。AI将根据您的描述生成个性化行程..."
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
                 />
+                <p className="mt-2 text-xs text-gray-500">
+                  💡 提示：可以语音或文字描述您的旅行需求，AI会生成详细的行程规划
+                </p>
               </div>
 
-              {/* AI 生成按钮 */}
-              <div>
-                <button
-                  type="button"
-                  onClick={handleAIGenerate}
-                  disabled={aiLoading || !formData.destination || !formData.startDate || !formData.endDate}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium flex items-center justify-center gap-2"
-                >
-                  <Sparkles className="h-5 w-5" />
-                  {aiLoading ? 'AI 规划中...' : 'AI 智能生成行程'}
-                </button>
-              </div>
-
-              {/* AI 生成的计划展示 */}
+              {/* AI生成的计划预览 */}
               {aiPlan && (
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
                   <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-purple-600" />
-                    AI 生成的行程计划
+                    ✨ AI生成的行程计划预览
                   </h3>
                   
                   {/* 行程安排 */}
                   {aiPlan.itinerary && aiPlan.itinerary.length > 0 && (
                     <div className="mb-3">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">行程安排：</h4>
-                      <div className="space-y-2">
-                        {aiPlan.itinerary.map((day: any, index: number) => (
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">📅 行程安排：</h4>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {aiPlan.itinerary.slice(0, 3).map((day: any, index: number) => (
                           <div key={index} className="bg-white rounded p-3 text-sm">
                             <div className="font-medium text-gray-900">{day.day}</div>
                             <ul className="mt-1 space-y-1 text-gray-600">
-                              {day.activities.map((activity: string, i: number) => (
-                                <li key={i}>• {activity}</li>
+                              {day.activities && day.activities.slice(0, 2).map((activity: any, i: number) => (
+                                <li key={i}>
+                                  • {typeof activity === 'string' ? activity : (activity.title || activity.time || '活动')}
+                                </li>
                               ))}
                             </ul>
                           </div>
                         ))}
+                        {aiPlan.itinerary.length > 3 && (
+                          <p className="text-xs text-gray-500 text-center">...还有 {aiPlan.itinerary.length - 3} 天行程</p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -331,9 +322,9 @@ export default function NewTripPage() {
                   {/* 预算明细 */}
                   {aiPlan.budgetBreakdown && (
                     <div className="mb-3">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">预算明细：</h4>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">💰 预算明细：</h4>
                       <div className="bg-white rounded p-3 text-sm space-y-1">
-                        {Object.entries(aiPlan.budgetBreakdown).map(([key, value]: [string, any]) => (
+                        {Object.entries(aiPlan.budgetBreakdown).slice(0, 4).map(([key, value]: [string, any]) => (
                           <div key={key} className="flex justify-between">
                             <span className="text-gray-600">{key}：</span>
                             <span className="font-medium text-gray-900">¥{value}</span>
@@ -342,22 +333,14 @@ export default function NewTripPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* 旅行建议 */}
-                  {aiPlan.tips && aiPlan.tips.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">旅行建议：</h4>
-                      <ul className="bg-white rounded p-3 text-sm space-y-1 text-gray-600">
-                        {aiPlan.tips.map((tip: string, index: number) => (
-                          <li key={index}>💡 {tip}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  
+                  <p className="text-xs text-purple-600 mt-3">
+                    ✓ 已生成完整计划，点击下方按钮保存
+                  </p>
                 </div>
               )}
 
-              {/* 提交按钮 */}
+              {/* 智能创建按钮 */}
               <div className="flex gap-4">
                 <button
                   type="button"
@@ -369,11 +352,22 @@ export default function NewTripPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-lg hover:from-primary-600 hover:to-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                  className="flex-2 px-8 py-3 bg-gradient-to-r from-purple-500 via-pink-500 to-primary-500 text-white rounded-lg hover:from-purple-600 hover:via-pink-600 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
-                  {loading ? '创建中...' : '创建行程'}
+                  <Sparkles className="h-5 w-5" />
+                  {loading ? (
+                    <>
+                      <span className="animate-pulse">AI规划中...</span>
+                    </>
+                  ) : (
+                    '🚀 智能创建行程'
+                  )}
                 </button>
               </div>
+              
+              <p className="text-xs text-center text-gray-500">
+                💡 点击后AI将自动生成个性化行程并保存
+              </p>
             </form>
           </div>
 

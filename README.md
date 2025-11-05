@@ -1,49 +1,87 @@
-# AI Travel Planner - AI 旅行规划师
+# 🧳 AI Travel Planner - AI 旅行规划师
 
-一个基于 AI 的智能旅行规划应用，支持语音输入、智能行程规划、费用管理等功能。
+> 基于 AI 的智能旅行规划应用，支持语音输入、智能行程规划、费用管理和地图导航。
 
-## 项目简介
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-本项目旨在简化旅行规划过程，通过 AI 了解用户需求，自动生成详细的旅行路线和建议，并提供实时旅行辅助。
+## 📖 文档导航
 
-## 核心功能
+- 📘 **[完整文档索引](./DOCS_INDEX.md)** - 查看所有文档
+- 🚀 **[快速开始](./QUICKSTART.md)** - 5 分钟快速上手
+- 🎤 **[语音和 AI 功能](./VOICE_AND_AI_GUIDE.md)** - 核心功能使用指南
+- 🏗️ **[项目结构](./PROJECT_STRUCTURE.md)** - 代码结构详解
 
-### ✅ 已完成功能
-- ✅ 用户注册与登录系统
-- ✅ 云端数据同步（Supabase）
-- ✅ 行程创建与管理
-- ✅ 费用记录与预算跟踪
-- ✅ 高德地图集成
-- ✅ 响应式 UI 设计
+## ✨ 核心功能
 
-### 🚧 开发中功能
-- 🚧 AI 智能行程生成（LLM 集成）
-- 🚧 语音输入功能（讯飞语音识别）
-- 🚧 路线规划与导航
-- 🚧 实时旅行助手
+- 🎤 **语音输入** - 使用浏览器语音识别 API，支持中文语音转文字
+- 🤖 **AI 智能规划** - 接入阿里云通义千问，自动生成个性化旅行行程
+- 📍 **地图集成** - 高德地图显示目的地位置和路线
+- 💰 **费用管理** - 记录旅行支出，实时预算跟踪
+- 🔐 **用户系统** - 安全的注册登录，数据云端同步
+- 📱 **响应式设计** - 适配各种设备尺寸
 
-## 技术栈
+## 🏗️ 技术栈
 
-### 前端
-- **框架**: Next.js 14 (App Router)
-- **语言**: TypeScript
-- **样式**: Tailwind CSS
-- **状态管理**: Zustand
-- **地图**: 高德地图 API
-- **语音识别**: 科大讯飞语音 API
+| 类型 | 技术 |
+|------|------|
+| **前端** | Next.js 14, TypeScript, Tailwind CSS, Zustand |
+| **后端** | Express.js, TypeScript, Prisma ORM |
+| **数据库** | Supabase (PostgreSQL) |
+| **认证** | JWT + bcrypt |
+| **AI** | 阿里云百炼（通义千问 qwen-turbo） |
+| **地图** | 高德地图 JS API 2.0 |
+| **语音** | Web Speech API |
 
-### 后端
-- **框架**: Express.js
-- **语言**: TypeScript
-- **数据库**: PostgreSQL
-- **ORM**: Prisma
-- **认证**: JWT
-- **AI**: 阿里云百炼/其他 LLM API
+## 🚀 快速开始
 
-### 部署
-- **容器化**: Docker & Docker Compose
-- **CI/CD**: GitHub Actions
-- **镜像仓库**: 阿里云镜像仓库
+### 1️⃣ 克隆项目
+
+```bash
+git clone https://github.com/Lvawe/llm4se_AI_Travel_Planner.git
+cd llm4se_AI_Travel_Planner
+```
+
+### 2️⃣ 配置数据库（Supabase）
+
+1. 访问 [Supabase](https://supabase.com/) 创建免费项目
+2. 获取数据库连接字符串
+3. 详细步骤：[docs/SUPABASE_SETUP.md](./docs/SUPABASE_SETUP.md)
+
+### 3️⃣ 配置环境变量
+
+**后端** `backend/.env`:
+```bash
+DATABASE_URL="postgresql://postgres:password@db.xxx.supabase.co:5432/postgres"
+BACKEND_PORT=3001
+JWT_SECRET="your-secret-key"
+
+# 阿里云百炼 API
+DASHSCOPE_API_KEY="sk-your-api-key"
+LLM_MODEL="qwen-turbo"
+```
+
+**前端** `frontend/.env.local`:
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_AMAP_KEY="your-amap-key"
+```
+
+### 4️⃣ 启动项目
+
+```bash
+# 后端
+cd backend
+npm install
+npx prisma migrate dev  # 数据库迁移
+npm run dev
+
+# 前端（新终端）
+cd frontend
+npm install
+npm run dev
+```
+
+访问 http://localhost:5090 🎉
 
 ## 快速开始
 
@@ -216,126 +254,77 @@ docker-compose -f docker/docker-compose.prod.yml up -d
 │   ├── Dockerfile.backend
 │   └── docker-compose.yml
 │
-├── .github/               # GitHub Actions 配置
-│   └── workflows/
+## 📂 项目结构
+
+```
+llm4se_AI_Travel_Planner/
+├── frontend/              # Next.js 前端
+│   ├── src/
+│   │   ├── app/          # 页面路由
+│   │   ├── components/   # UI 组件
+│   │   ├── lib/          # 工具函数
+│   │   └── store/        # 状态管理
+│   └── package.json
 │
-└── README.md
+├── backend/              # Express 后端
+│   ├── src/
+│   │   ├── routes/       # API 路由
+│   │   ├── services/     # 业务逻辑
+│   │   └── middleware/   # 中间件
+│   ├── prisma/           # 数据库 Schema
+│   └── package.json
+│
+├── docs/                 # 详细文档
+│   ├── SUPABASE_SETUP.md
+│   ├── API_CONFIG.md
+│   └── ...
+│
+├── QUICKSTART.md         # 快速开始指南
+├── VOICE_AND_AI_GUIDE.md # 语音和 AI 功能使用说明
+└── README.md             # 本文件
 ```
 
-## API 文档
+## 📖 详细文档
 
-### 认证接口
+| 文档 | 说明 |
+|------|------|
+| [快速开始](./QUICKSTART.md) | 5 分钟快速上手指南 |
+| [语音和 AI 功能](./VOICE_AND_AI_GUIDE.md) | 语音输入和 AI 规划使用说明 |
+| [Supabase 配置](./docs/SUPABASE_SETUP.md) | 数据库配置详细步骤 |
+| [API 配置](./docs/API_CONFIG.md) | API Key 获取和配置 |
+| [开发指南](./docs/DEVELOPMENT.md) | 开发环境和规范 |
+| [部署指南](./docs/DEPLOYMENT.md) | 生产环境部署 |
 
-#### 注册
-```
-POST /api/auth/register
-Content-Type: application/json
+## 🔑 API Key 配置
 
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "name": "张三"
-}
-```
+获取以下服务的 API Key：
 
-#### 登录
-```
-POST /api/auth/login
-Content-Type: application/json
+1. **阿里云百炼**（必需，AI 功能）
+   - 访问：https://bailian.console.aliyun.com/
+   - 获取 DashScope API Key
+   - 配置到 `backend/.env` 的 `DASHSCOPE_API_KEY`
 
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
+2. **高德地图**（必需，地图功能）
+   - 访问：https://console.amap.com/
+   - 创建 Web 服务应用
+   - 配置到 `frontend/.env.local` 的 `NEXT_PUBLIC_AMAP_KEY`
 
-Response:
-{
-  "token": "jwt-token",
-  "user": {
-    "id": "user-id",
-    "email": "user@example.com",
-    "name": "张三"
-  }
-}
-```
+3. **Supabase**（必需，数据库）
+   - 访问：https://supabase.com/
+   - 创建项目，获取数据库连接字符串
+   - 配置到 `backend/.env` 的 `DATABASE_URL`
 
-### 行程规划接口
+详细配置步骤：[docs/API_CONFIG.md](./docs/API_CONFIG.md)
 
-详细 API 文档请参考 [API.md](./docs/API.md)
+## 🤝 贡献
 
-## API Key 配置说明
+欢迎提交 Issue 和 Pull Request！
 
-**重要**: 请勿将 API Key 直接写入代码中！
-
-### 配置方式
-
-1. **通过环境变量** (推荐生产环境)
-   - 在 `.env` 文件中配置
-   - 通过 Docker 环境变量传入
-
-2. **通过应用设置页面** (推荐用户使用)
-   - 访问应用设置页面
-   - 输入各项 API Key
-   - 保存后即可使用
-
-### API Key 获取
-
-- **科大讯飞语音**: https://console.xfyun.cn/
-- **阿里云百炼**: https://bailian.console.aliyun.com/
-- **高德地图**: https://console.amap.com/
-
-## 开发指南
-
-### 提交规范
-
-使用 Conventional Commits 规范:
-
-```
-feat: 添加新功能
-fix: 修复bug
-docs: 文档更新
-style: 代码格式调整
-refactor: 代码重构
-test: 测试相关
-chore: 构建/工具链相关
-```
-
-### 分支策略
-
-- `main`: 生产环境分支
-- `develop`: 开发分支
-- `feature/*`: 功能分支
-- `bugfix/*`: Bug 修复分支
-
-## 测试
-
-```bash
-# 后端测试
-cd backend
-npm run test
-
-# 前端测试
-cd frontend
-npm run test
-```
-
-## 部署
-
-详细部署文档请参考 [DEPLOYMENT.md](./docs/DEPLOYMENT.md)
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request!
-
-## 许可证
+## 📄 许可证
 
 MIT License
 
-## 联系方式
+## 👤 作者
 
 - GitHub: [@Lvawe](https://github.com/Lvawe)
 - 项目地址: https://github.com/Lvawe/llm4se_AI_Travel_Planner
-
-## 更新日志
-
-详细更新日志请参考 [CHANGELOG.md](./CHANGELOG.md)

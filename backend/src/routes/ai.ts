@@ -26,7 +26,15 @@ router.post('/generate-plan', authMiddleware, async (req: AuthRequest, res: Resp
       description
     })
 
-    res.json(plan)
+    // 🔍 调试日志 - 查看 LLM 生成的计划
+    console.log('===== LLM 生成的计划 =====')
+    console.log('plan:', JSON.stringify(plan, null, 2))
+    console.log('plan.itinerary 数量:', plan.itinerary?.length)
+    console.log('plan.budgetBreakdown 数量:', plan.budgetBreakdown?.length)
+    console.log('plan.tips 数量:', plan.tips?.length)
+    console.log('===========================')
+
+    res.json({ plan })
   } catch (error: any) {
     console.error('Generate plan error:', error)
     res.status(500).json({ error: error.message || '生成旅行计划失败' })

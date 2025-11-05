@@ -1,3 +1,4 @@
+// User types
 export interface User {
   id: string
   email: string
@@ -21,7 +22,8 @@ export interface AuthResponse {
   user: User
 }
 
-export interface TripPlan {
+// Trip types
+export interface Trip {
   id: string
   userId: string
   destination: string
@@ -30,74 +32,19 @@ export interface TripPlan {
   budget: number
   travelers: number
   preferences: string[]
-  itinerary: Itinerary[]
+  description?: string
+  itinerary?: any // JSON data from AI
   status: 'draft' | 'planned' | 'ongoing' | 'completed'
   createdAt: string
   updatedAt: string
+  expenses?: Expense[]
 }
 
-export interface Itinerary {
-  day: number
-  date: string
-  activities: Activity[]
-  accommodation?: Accommodation
-  meals: Meal[]
-  transportation: Transportation[]
-  totalCost: number
-}
-
-export interface Activity {
-  id: string
-  name: string
-  type: 'attraction' | 'activity' | 'rest'
-  location: Location
-  startTime: string
-  endTime: string
-  duration: number
-  cost: number
-  description?: string
-  tips?: string[]
-}
-
-export interface Accommodation {
-  name: string
-  type: string
-  location: Location
-  checkIn: string
-  checkOut: string
-  cost: number
-  rating?: number
-}
-
-export interface Meal {
-  type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
-  name: string
-  location: Location
-  time: string
-  cost: number
-  cuisine?: string
-}
-
-export interface Transportation {
-  type: 'flight' | 'train' | 'bus' | 'taxi' | 'walk' | 'metro'
-  from: Location
-  to: Location
-  departureTime: string
-  arrivalTime: string
-  cost: number
-  duration: number
-}
-
-export interface Location {
-  name: string
-  address: string
-  latitude: number
-  longitude: number
-}
-
+// Expense types
 export interface Expense {
   id: string
   tripId: string
+  userId: string
   category: 'transportation' | 'accommodation' | 'food' | 'activity' | 'shopping' | 'other'
   amount: number
   currency: string
@@ -106,17 +53,18 @@ export interface Expense {
   createdAt: string
 }
 
-export interface ApiKeysConfig {
-  iFlytek?: {
-    appId: string
-    apiKey: string
-    apiSecret: string
-  }
-  llm?: {
-    apiKey: string
-    apiUrl: string
-  }
-  amap?: {
-    apiKey: string
-  }
+// AI Plan types
+export interface AIPlan {
+  itinerary: DayPlan[]
+  budgetBreakdown: BudgetBreakdown
+  tips: string[]
+}
+
+export interface DayPlan {
+  day: string
+  activities: string[]
+}
+
+export interface BudgetBreakdown {
+  [key: string]: number
 }
