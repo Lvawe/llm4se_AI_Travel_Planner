@@ -13,6 +13,8 @@ export default function VoiceInput({ onResult, placeholder = '🎤 说出您的�
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [interimText, setInterimText] = useState('')
+  const [finalText, setFinalText] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
   const recognitionRef = useRef<any>(null)
 
   useEffect(() => {
@@ -104,11 +106,12 @@ export default function VoiceInput({ onResult, placeholder = '🎤 说出您的�
       recognitionRef.current = null
     }
     
-    const finalText = transcript + interimText
+    const recordedText = transcript + interimText
     
-    if (finalText && finalText.trim()) {
-      onResult(finalText.trim())
-      toast.success('语音输入完成！', { icon: '✅' })
+    if (recordedText && recordedText.trim()) {
+      setFinalText(recordedText.trim())
+      setShowConfirm(true)
+      toast.success('录音完成！请确认内容', { icon: '✅' })
     } else {
       toast.error('未识别到内容，请重试')
     }
@@ -118,54 +121,111 @@ export default function VoiceInput({ onResult, placeholder = '🎤 说出您的�
     setInterimText('')
   }
 
+  const handleConfirm = () => {
+    if (finalText.trim()) {
+      onResult(finalText.trim())
+      setShowConfirm(false)
+      setFinalText('')
+    }
+  }
+
+  const handleCancel = () => {
+    setShowConfirm(false)
+    setFinalText('')
+    setTranscript('')
+    setInterimText('')
+  }
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFinalText(e.target.value)
+  }
+
   return (
     <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
-      <div className="flex flex-col items-center gap-3">
-        <button
-          type="button"
-          onClick={isRecording ? stopRecording : startRecording}
-          className={`p-4 rounded-full transition-all transform hover:scale-110 ${
-            isRecording
-              ? 'bg-red-500 hover:bg-red-600 animate-pulse shadow-red-300'
-              : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
-          } text-white shadow-lg hover:shadow-xl`}
-          title={isRecording ? '点击停止录音' : '点击开始语音输入'}
-        >
-          {isRecording ? <Square className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
-        </button>
-        
-        {isRecording && (
-          <div className="text-center animate-fade-in w-full">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Volume2 className="h-4 w-4 text-red-500 animate-pulse" />
-              <p className="text-sm font-medium text-red-600">正在录音中...</p>
-            </div>
-            
-            {(transcript || interimText) && (
-              <div className="mt-2 text-sm text-gray-900 bg-white px-4 py-3 rounded-lg shadow-sm border border-blue-200 max-w-md mx-auto">
-                <p className="text-xs text-gray-500 mb-1">识别内容：</p>
-                <p className="text-left">
-                  <span className="text-gray-900">{transcript}</span>
-                  <span className="text-gray-400 italic">{interimText}</span>
-                </p>
+      {showConfirm ? (
+        // 确认界面
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-bold text-gray-800 mb-2">
+              为确保识别成功，请将表单所需内容编辑为数字，并使用逗号分隔
+            </label>
+            <label className="block text-sm font-bold text-blue-600 mb-2">
+              示例：我想去北京，玩5天，预算10000元，喜欢历史文化，2个人
+            </label>
+            <textarea
+              value={finalText}
+              onChange={handleTextChange}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-sm font-medium"
+              placeholder="请输入您的旅行需求"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm shadow-md"
+            >
+              ✓ 确认并填充
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+            >
+              重新录音
+            </button>
+          </div>
+        </div>
+      ) : (
+        // 录音界面
+        <div className="flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={isRecording ? stopRecording : startRecording}
+            className={`p-4 rounded-full transition-all transform hover:scale-110 ${
+              isRecording
+                ? 'bg-red-500 hover:bg-red-600 animate-pulse shadow-red-300'
+                : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
+            } text-white shadow-lg hover:shadow-xl`}
+            title={isRecording ? '点击停止录音' : '点击开始语音输入'}
+          >
+            {isRecording ? <Square className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+          </button>
+          
+          {isRecording && (
+            <div className="text-center animate-fade-in w-full">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Volume2 className="h-4 w-4 text-red-500 animate-pulse" />
+                <p className="text-sm font-medium text-red-600">正在录音中...</p>
               </div>
-            )}
-            
-            <p className="text-xs text-gray-600 mt-2">
-              💡 说完后点击停止按钮
-            </p>
-          </div>
-        )}
-        
-        {!isRecording && (
-          <div className="text-center">
-            <p className="text-sm text-gray-700 font-medium">{placeholder}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              例如：我想去成都，5天4晚，预算5000元，喜欢美食和历史文化，2个人
-            </p>
-          </div>
-        )}
-      </div>
+              
+              {(transcript || interimText) && (
+                <div className="mt-2 text-sm text-gray-900 bg-white px-4 py-3 rounded-lg shadow-sm border border-blue-200 max-w-md mx-auto">
+                  <p className="text-xs text-gray-500 mb-1">识别内容：</p>
+                  <p className="text-left">
+                    <span className="text-gray-900">{transcript}</span>
+                    <span className="text-gray-400 italic">{interimText}</span>
+                  </p>
+                </div>
+              )}
+              
+              <p className="text-xs text-gray-600 mt-2">
+                💡 说完后点击停止按钮
+              </p>
+            </div>
+          )}
+          
+          {!isRecording && (
+            <div className="text-center">
+              <p className="text-sm text-gray-700 font-medium">{placeholder}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                例如：我想去成都，3天，预算8000元，喜欢美食和自然风光，2个人
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
