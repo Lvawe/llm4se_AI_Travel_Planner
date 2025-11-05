@@ -30,7 +30,8 @@ model Trip {
   budget      Float
   travelers   Int
   preferences String[] // JSON array of preferences
-  itinerary   Json?    // Detailed itinerary JSON
+  description String?  // Trip description
+  itinerary   Json?    // Detailed itinerary JSON (includes AI-generated plan)
   status      String   @default("draft") // draft, planned, ongoing, completed
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

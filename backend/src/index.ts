@@ -5,6 +5,7 @@ import authRoutes from './routes/auth'
 import tripRoutes from './routes/trip'
 import expenseRoutes from './routes/expense'
 import apiKeyRoutes from './routes/apiKey'
+import aiRoutes from './routes/ai'
 
 // Load environment variables
 dotenv.config()
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/trips', tripRoutes)
 app.use('/api/expenses', expenseRoutes)
 app.use('/api/api-keys', apiKeyRoutes)
+app.use('/api/ai', aiRoutes)
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {

@@ -3,15 +3,19 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
-import { MapPin, Calendar, DollarSign, Users, Mic, ArrowLeft } from 'lucide-react'
+import { MapPin, Calendar, DollarSign, Users, Mic, ArrowLeft, Sparkles } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '@/lib/api'
 import AmapComponent from '@/components/AmapComponent'
+import VoiceInput from '@/components/VoiceInput'
 
 export default function NewTripPage() {
   const router = useRouter()
   const { token } = useAuthStore()
   const [loading, setLoading] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [showVoiceInput, setShowVoiceInput] = useState(false)
+  const [aiPlan, setAiPlan] = useState<any>(null)
   const [formData, setFormData] = useState({
     destination: '',
     startDate: '',
@@ -45,6 +49,43 @@ export default function NewTripPage() {
     }))
   }
 
+  const handleVoiceResult = (transcript: string) => {
+    setFormData(prev => ({
+      ...prev,
+      description: prev.description + (prev.description ? ' ' : '') + transcript
+    }))
+    setShowVoiceInput(false)
+    toast.success('语音识别成功！')
+  }
+
+  const handleAIGenerate = async () => {
+    if (!formData.destination || !formData.startDate || !formData.endDate) {
+      toast.error('请先填写目的地和日期')
+      return
+    }
+
+    setAiLoading(true)
+    try {
+      const response = await api.post('/api/ai/generate-plan', {
+        destination: formData.destination,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        budget: parseFloat(formData.budget) || 0,
+        travelers: parseInt(formData.travelers),
+        preferences: formData.preferences,
+        description: formData.description
+      })
+
+      setAiPlan(response.data.plan)
+      toast.success('AI 行程规划生成成功！')
+    } catch (error: any) {
+      console.error('AI generate error:', error)
+      toast.error(error.response?.data?.error || 'AI 生成失败')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -64,7 +105,8 @@ export default function NewTripPage() {
         travelers: parseInt(formData.travelers),
         preferences: formData.preferences,
         description: formData.description,
-        status: 'planning'
+        status: 'planning',
+        aiPlan: aiPlan || undefined
       })
 
       toast.success('行程创建成功！')
@@ -224,12 +266,18 @@ export default function NewTripPage() {
                   行程描述
                   <button
                     type="button"
+                    onClick={() => setShowVoiceInput(!showVoiceInput)}
                     className="ml-2 text-primary-600 hover:text-primary-700"
                     title="使用语音输入"
                   >
                     <Mic className="inline h-4 w-4" />
                   </button>
                 </label>
+                {showVoiceInput && (
+                  <div className="mb-3">
+                    <VoiceInput onResult={handleVoiceResult} />
+                  </div>
+                )}
                 <textarea
                   name="description"
                   value={formData.description}
@@ -239,6 +287,75 @@ export default function NewTripPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
                 />
               </div>
+
+              {/* AI 生成按钮 */}
+              <div>
+                <button
+                  type="button"
+                  onClick={handleAIGenerate}
+                  disabled={aiLoading || !formData.destination || !formData.startDate || !formData.endDate}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="h-5 w-5" />
+                  {aiLoading ? 'AI 规划中...' : 'AI 智能生成行程'}
+                </button>
+              </div>
+
+              {/* AI 生成的计划展示 */}
+              {aiPlan && (
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                    AI 生成的行程计划
+                  </h3>
+                  
+                  {/* 行程安排 */}
+                  {aiPlan.itinerary && aiPlan.itinerary.length > 0 && (
+                    <div className="mb-3">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">行程安排：</h4>
+                      <div className="space-y-2">
+                        {aiPlan.itinerary.map((day: any, index: number) => (
+                          <div key={index} className="bg-white rounded p-3 text-sm">
+                            <div className="font-medium text-gray-900">{day.day}</div>
+                            <ul className="mt-1 space-y-1 text-gray-600">
+                              {day.activities.map((activity: string, i: number) => (
+                                <li key={i}>• {activity}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 预算明细 */}
+                  {aiPlan.budgetBreakdown && (
+                    <div className="mb-3">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">预算明细：</h4>
+                      <div className="bg-white rounded p-3 text-sm space-y-1">
+                        {Object.entries(aiPlan.budgetBreakdown).map(([key, value]: [string, any]) => (
+                          <div key={key} className="flex justify-between">
+                            <span className="text-gray-600">{key}：</span>
+                            <span className="font-medium text-gray-900">¥{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 旅行建议 */}
+                  {aiPlan.tips && aiPlan.tips.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">旅行建议：</h4>
+                      <ul className="bg-white rounded p-3 text-sm space-y-1 text-gray-600">
+                        {aiPlan.tips.map((tip: string, index: number) => (
+                          <li key={index}>💡 {tip}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* 提交按钮 */}
               <div className="flex gap-4">

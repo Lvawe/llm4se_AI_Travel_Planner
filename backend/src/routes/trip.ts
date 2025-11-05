@@ -49,16 +49,31 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 // Create trip
 router.post('/', async (req: AuthRequest, res: Response) => {
   try {
+    const { destination, startDate, endDate, budget, travelers, preferences, description, status, aiPlan } = req.body
+    
+    // Validate required fields
+    if (!destination || !startDate || !endDate) {
+      return res.status(400).json({ error: '目的地、开始日期和结束日期为必填项' })
+    }
+
     const trip = await prisma.trip.create({
       data: {
-        ...req.body,
         userId: req.userId!,
+        destination,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        budget: budget || 0,
+        travelers: travelers || 1,
+        preferences: preferences || [],
+        description: description || null,
+        itinerary: aiPlan || null, // Store AI plan in itinerary field
+        status: status || 'draft',
       },
     })
     res.status(201).json(trip)
   } catch (error) {
     console.error('Create trip error:', error)
-    res.status(500).json({ message: '创建行程失败' })
+    res.status(500).json({ error: '创建行程失败', details: error instanceof Error ? error.message : 'Unknown error' })
   }
 })
 
