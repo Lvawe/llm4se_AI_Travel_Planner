@@ -46,8 +46,8 @@
 ### 前置要求
 
 - Node.js >= 18
-- Docker & Docker Compose
-- PostgreSQL (或使用 Docker 运行)
+- Docker & Docker Compose（可选）
+- Supabase 账号（免费）
 
 ### 环境配置
 
@@ -57,13 +57,23 @@ git clone https://github.com/Lvawe/llm4se_AI_Travel_Planner.git
 cd llm4se_AI_Travel_Planner
 ```
 
-2. 配置环境变量
+2. 创建 Supabase 项目
+
+   - 访问 [Supabase](https://supabase.com/) 创建免费账号
+   - 创建新项目，选择 Tokyo 或 Singapore 区域
+   - 获取数据库连接字符串
+   - 详细步骤请参考 [Supabase 配置指南](./docs/SUPABASE_SETUP.md)
+
+3. 配置环境变量
 
 在项目根目录创建 `.env` 文件:
 
 ```env
-# 数据库配置
-DATABASE_URL="postgresql://user:password@localhost:5432/travel_planner"
+# Supabase 数据库配置（推荐）
+DATABASE_URL="postgresql://postgres:your-password@db.xxxxx.supabase.co:5432/postgres"
+
+# 或使用本地 PostgreSQL
+# DATABASE_URL="postgresql://user:password@localhost:5432/travel_planner"
 
 # JWT 密钥
 JWT_SECRET="your-secret-key-change-in-production"
@@ -89,10 +99,32 @@ AMAP_API_KEY=""
 
 ### 本地开发
 
-#### 使用 Docker Compose (推荐)
+#### 方式一：使用 Supabase（推荐，支持云端同步）
 
 ```bash
-# 启动所有服务
+# 1. 配置 Supabase（参考 docs/SUPABASE_SETUP.md）
+
+# 2. 启动后端
+cd backend
+npm install
+npm run db:generate  # 生成 Prisma Client
+npm run db:migrate   # 运行数据库迁移
+npm run dev
+
+# 3. 启动前端（新终端）
+cd frontend
+npm install
+npm run dev
+```
+
+访问:
+- 前端: http://localhost:3000
+- 后端 API: http://localhost:3001
+
+#### 方式二：使用 Docker Compose（本地数据库）
+
+```bash
+# 启动所有服务（包括 PostgreSQL）
 docker-compose up -d
 
 # 查看日志
