@@ -61,3 +61,6 @@ check-config.js
 /.env.example
 /start.sh
 **/secrets.json
+ai-travel-planner.tar
+ai-travel-planner.tar.gz
+docker_test/*.tar
