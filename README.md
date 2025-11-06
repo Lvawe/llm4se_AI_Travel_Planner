@@ -10,13 +10,13 @@
 ## ✨ 核心功能
 
 ### 🎤 语音智能填写
-- 浏览器原生语音识别（Web Speech API）
+- 科大讯飞API语音识别
 - 中文语音转文字，自动识别目的地、天数、预算、人数
 - 语音内容确认编辑，智能提取关键信息
 - 自动填充表单，一键生成行程预览
 
 ### 🤖 AI 智能规划
-- 阿里云通义千问大模型（qwen-turbo）
+- 阿里云通义千问大模型（qwen-plus）
 - 个性化行程推荐，包含详细日程安排
 - 智能预算分配和费用预估
 - 旅行建议和注意事项
@@ -55,9 +55,9 @@
 
 ### AI & 地图服务
 - **大模型**: 阿里云百炼 DashScope API
-- **模型**: qwen-turbo
+- **模型**: qwen-plus
 - **地图**: 高德地图 Web 服务 API + JS API 2.0
-- **语音**: Web Speech API (浏览器原生)
+- **语音**: 科大讯飞 API 
 
 ## 🚀 快速开始
 
@@ -75,10 +75,7 @@
 # 加载镜像
 docker load -i ai-travel-planner.tar
 
-# 使用快速启动脚本（推荐）
-./quick-start.sh
-
-# 或手动运行
+# 手动运行
 docker run -d \
   --name ai-travel-planner \
   --restart unless-stopped \
@@ -93,7 +90,7 @@ docker run -d \
    - 前端: http://localhost:5090
    - 后端 API: http://localhost:3001
 
-📖 详细说明请查看 [Docker 镜像使用指南](DOCKER_IMAGE_GUIDE.md)
+📖 详细说明请查看 [Docker 镜像使用指南](docs/DOCKER_IMAGE_GUIDE.md)
 
 #### 选项 B: 从阿里云镜像仓库拉取
 
@@ -116,7 +113,7 @@ docker run -d \
   registry.cn-hangzhou.aliyuncs.com/llm4se/ai-travel-planner:latest
 ```
 
-**注意**: 如果数据库使用 Supabase IPv6，需要先启动代理：
+**注意**: 数据库使用 Supabase IPv6，需要先启动代理：
 ```bash
 socat TCP-LISTEN:25432,fork,reuseaddr TCP:db.xxx.supabase.co:5432 &
 ```
