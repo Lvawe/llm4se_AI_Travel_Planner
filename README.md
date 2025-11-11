@@ -63,7 +63,7 @@
 
 ### 方式一：使用预构建 Docker 镜像（推荐）⭐
 
-#### 选项 A: 下载 tar 镜像文件（离线部署）
+#### 下载 tar 镜像文件（离线部署）
 
 1. **下载镜像文件**
 
@@ -91,27 +91,6 @@ docker run -d \
    - 后端 API: http://localhost:3001
 
 📖 详细说明请查看 [Docker 镜像使用指南](docs/DOCKER_IMAGE_GUIDE.md)
-
-#### 选项 B: 从阿里云镜像仓库拉取
-
-```bash
-# 从阿里云容器镜像仓库拉取最新镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/llm4se/ai-travel-planner:latest
-
-# 运行容器
-docker run -d \
-  --name ai-travel-planner \
-  --restart unless-stopped \
-  -p 5090:5090 \
-  -p 3001:3001 \
-  --add-host host.docker.internal:host-gateway \
-  -e DATABASE_URL="your_database_url" \
-  -e JWT_SECRET="your_jwt_secret" \
-  -e DASHSCOPE_API_KEY="your_dashscope_key" \
-  -e NEXT_PUBLIC_AMAP_KEY="your_amap_key" \
-  -e NEXT_PUBLIC_API_URL="http://localhost:3001" \
-  registry.cn-hangzhou.aliyuncs.com/llm4se/ai-travel-planner:latest
-```
 
 **注意**: 数据库使用 Supabase IPv6，需要先启动代理：
 ```bash
