@@ -79,7 +79,7 @@ export class LLMService {
           parameters: {
             result_format: 'message',
             temperature: 0.7,
-            max_tokens: 2000
+            max_tokens: 4000  // 增加到4000以避免JSON被截断
           }
         },
         {

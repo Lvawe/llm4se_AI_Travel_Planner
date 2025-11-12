@@ -112,9 +112,9 @@ RUN chmod +x /app/start.sh
 # 暴露端口
 EXPOSE 3001 5090
 
-# 健康检查
+# 健康检查 (使用 127.0.0.1 而不是 localhost 来强制使用 IPv4)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5090 || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:5090 || exit 1
 
 # 使用 tini 作为 init 进程
 ENTRYPOINT ["/sbin/tini", "--"]
