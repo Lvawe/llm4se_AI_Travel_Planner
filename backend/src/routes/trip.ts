@@ -56,6 +56,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: '目的地、开始日期和结束日期为必填项' })
     }
 
+    console.log('Creating trip with aiPlan:', JSON.stringify(aiPlan, null, 2))
+
     const trip = await prisma.trip.create({
       data: {
         userId: req.userId!,
@@ -70,6 +72,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         status: status || 'draft',
       },
     })
+    
+    console.log('Trip created with itinerary:', JSON.stringify(trip.itinerary, null, 2))
     
     res.status(201).json(trip)
   } catch (error) {

@@ -55,6 +55,10 @@ export class LLMService {
   async generateTripPlan(request: TripPlanRequest): Promise<TripPlanResponse> {
     const prompt = this.buildPrompt(request)
 
+    console.log('🤖 开始调用通义千问 API...')
+    console.log('目的地:', request.destination)
+    console.log('日期:', request.startDate, '至', request.endDate)
+
     try {
       const response = await axios.post(
         this.baseUrl,
@@ -86,14 +90,26 @@ export class LLMService {
         }
       )
 
+      console.log('✅ 通义千问 API 调用成功')
+
       if (response.data.output && response.data.output.choices) {
         const content = response.data.output.choices[0].message.content
-        return this.parseLLMResponse(content, request)
+        console.log('📝 LLM 返回内容（前500字符）:')
+        console.log(content.substring(0, 500))
+        
+        const parsedPlan = this.parseLLMResponse(content, request)
+        console.log('✅ 成功解析 LLM 返回的计划')
+        console.log('行程天数:', parsedPlan.itinerary.length)
+        console.log('预算项目:', parsedPlan.budgetBreakdown.length)
+        console.log('建议条数:', parsedPlan.tips.length)
+        
+        return parsedPlan
       }
 
       throw new Error('LLM 返回数据格式错误')
     } catch (error: any) {
-      console.error('LLM API 调用失败:', error.response?.data || error.message)
+      console.error('❌ LLM API 调用失败:', error.response?.data || error.message)
+      console.log('⚠️ 使用默认计划作为降级方案')
       // 返回默认计划作为降级
       return this.generateDefaultPlan(request)
     }
@@ -224,18 +240,24 @@ ${request.description ? `**用户需求**: ${request.description}` : ''}
    */
   private parseLLMResponse(content: string, request: TripPlanRequest): TripPlanResponse {
     try {
+      console.log('🔍 开始解析 LLM 响应...')
+      
       // 尝试多种方式提取和修复 JSON
       let jsonStr = content
 
       // 1. 提取 ```json 代码块
       const codeBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
       if (codeBlockMatch) {
+        console.log('✅ 检测到 JSON 代码块')
         jsonStr = codeBlockMatch[1]
       } else {
         // 2. 提取大括号内容
         const jsonMatch = content.match(/\{[\s\S]*\}/)
         if (jsonMatch) {
+          console.log('✅ 提取大括号内容')
           jsonStr = jsonMatch[0]
+        } else {
+          console.log('⚠️ 未找到 JSON 格式内容')
         }
       }
 
@@ -246,13 +268,20 @@ ${request.description ? `**用户需求**: ${request.description}` : ''}
         .replace(/\r/g, '')              // 移除回车
         .trim()
 
+      console.log('📄 清理后的 JSON（前300字符）:')
+      console.log(jsonStr.substring(0, 300))
+
       // 4. 尝试解析
       const parsed = JSON.parse(jsonStr)
+      console.log('✅ JSON 解析成功')
       
       // 5. 验证必需字段
       if (!parsed.itinerary || !Array.isArray(parsed.itinerary)) {
+        console.log('❌ 缺少 itinerary 字段或格式错误')
         throw new Error('缺少 itinerary 字段')
       }
+
+      console.log('✅ 数据结构验证通过')
 
       return {
         itinerary: parsed.itinerary || [],
@@ -261,8 +290,9 @@ ${request.description ? `**用户需求**: ${request.description}` : ''}
         recommendations: parsed.recommendations || []
       }
     } catch (error) {
-      console.error('解析 LLM 响应失败:', error)
-      console.error('原始内容:', content.substring(0, 500))
+      console.error('❌ 解析 LLM 响应失败:', error)
+      console.error('原始内容（前500字符）:', content.substring(0, 500))
+      console.log('⚠️ 使用默认计划')
       return this.generateDefaultPlan(request)
     }
   }
